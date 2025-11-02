@@ -33,3 +33,4 @@ jspm_packages/
 .vscode/
 
 config.json
+status.json

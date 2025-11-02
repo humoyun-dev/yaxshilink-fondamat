@@ -17,6 +17,9 @@ def arduino_worker(port: str, baudrate: int, reconnect_delay: float, newline: st
                 log.info(f"Connecting to {port} @ {baudrate}…")
                 ser = open_serial(port, baudrate, timeout=1.0)
                 log.info("Connected. Waiting for data…")
+                from . import state as _state
+                with _state.state_lock:
+                    _state.arduino_connected = True
 
             # Write pending commands
             wrote = False
@@ -44,6 +47,8 @@ def arduino_worker(port: str, baudrate: int, reconnect_delay: float, newline: st
             if line:
                 text = line.decode("utf-8", errors="ignore").strip("\r\n")
                 log.info(text)
+                with _state.state_lock:
+                    _state.last_arduino_line = text
             elif not wrote:
                 time.sleep(0.01)
 
@@ -55,6 +60,8 @@ def arduino_worker(port: str, baudrate: int, reconnect_delay: float, newline: st
                 except Exception:
                     pass
                 ser = None
+            with _state.state_lock:
+                _state.arduino_connected = False
             if not stop_event.is_set():
                 time.sleep(reconnect_delay)
 
@@ -63,6 +70,8 @@ def arduino_worker(port: str, baudrate: int, reconnect_delay: float, newline: st
             ser.close()
     except Exception:
         pass
+    with _state.state_lock:
+        _state.arduino_connected = False
     log.info("Stopped.")
 
 

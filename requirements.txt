@@ -1,3 +1,5 @@
 websockets
 pyserial-asyncio
 pyserial
+psutil
+GPUtil

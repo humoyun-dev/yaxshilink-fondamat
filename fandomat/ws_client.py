@@ -56,6 +56,8 @@ async def _ws_run_forever(stop_event):
             log_ws.info(f"Connecting to {ws_url} …")
             async with websockets.connect(ws_url) as ws:
                 log_ws.info("Connected")
+                with state.state_lock:
+                    state.ws_connected = True
 
                 hello = {
                     "type": "HELLO",
@@ -71,6 +73,8 @@ async def _ws_run_forever(stop_event):
                     async for raw in ws:
                         # Any server message counts as activity (resets session inactivity timer)
                         last_server_msg_at = _dt.datetime.utcnow()
+                        with state.state_lock:
+                            state.last_server_msg_ts = last_server_msg_at.timestamp()
                         try:
                             data = json.loads(raw)
                         except Exception:
@@ -79,6 +83,8 @@ async def _ws_run_forever(stop_event):
 
                         mtype = data.get("type")
                         log_ws.info(f"<- {data}")
+                        with state.state_lock:
+                            state.last_ws_event = data.get("type")
 
                         if mtype == "OK":
                             pass
@@ -163,6 +169,8 @@ async def _ws_run_forever(stop_event):
                         session_timeout_task.cancel()
         except Exception as e:
             log_ws.error(f"disconnected/error: {e}")
+            with state.state_lock:
+                state.ws_connected = False
         if not stop_event.is_set():
             await asyncio.sleep(5)
 

@@ -13,6 +13,7 @@ from fandomat.arduino import arduino_worker
 from fandomat.ws_client import ws_thread_runner
 from fandomat import state
 from fandomat.logging_setup import setup_logging
+from fandomat.status import status_writer
 import logging
 
 
@@ -84,6 +85,8 @@ def main(argv: Optional[list[str]] = None) -> int:
         threading.Thread(target=scanner_read_worker, args=(scanner_port, baud_scanner, args.raw, args.reconnect_delay, newline, stop_event), daemon=True),
         threading.Thread(target=arduino_worker, args=(arduino_port, baud_arduino, args.reconnect_delay, newline, stop_event), daemon=True),
     ]
+    # status writer thread (writes status.json next to config.json)
+    threads.append(threading.Thread(target=status_writer, args=(stop_event,), daemon=True))
 
     ws_thread = threading.Thread(target=ws_thread_runner, args=(state.ws_stop_event,), daemon=True)
     ws_thread.start()

@@ -19,6 +19,8 @@ def read_worker(port: str, baudrate: int, raw: bool, reconnect_delay: float, new
                 log.info(f"Connecting to {port} @ {baudrate}…")
                 ser = open_serial(port, baudrate, timeout=1.0)
                 log.info("Connected. Waiting for data…")
+                with state.state_lock:
+                    state.scanner_connected = True
 
             line: bytes = ser.readline()
             if not line:
@@ -29,6 +31,8 @@ def read_worker(port: str, baudrate: int, raw: bool, reconnect_delay: float, new
             else:
                 text = line.decode("utf-8", errors="ignore").strip("\r\n")
                 log.info(text)
+                with state.state_lock:
+                    state.last_scanner_line = text
                 if text:
                     with state.state_lock:
                         active = state.session_active
@@ -49,6 +53,8 @@ def read_worker(port: str, baudrate: int, raw: bool, reconnect_delay: float, new
                 except Exception:
                     pass
                 ser = None
+            with state.state_lock:
+                state.scanner_connected = False
             if not stop_event.is_set():
                 time.sleep(reconnect_delay)
 
@@ -57,4 +63,6 @@ def read_worker(port: str, baudrate: int, raw: bool, reconnect_delay: float, new
             ser.close()
     except Exception:
         pass
+    with state.state_lock:
+        state.scanner_connected = False
     log.info("Stopped.")
