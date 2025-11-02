@@ -271,6 +271,50 @@ def install(install_root: Path, reinstall_deps: bool = False):
     else:
         print("Unsupported OS for service setup. Install will copy files and create venv only.")
 
+    # Install CLI shim: ~/.yaxshilink/bin/yaxshilink and try to link to ~/.local/bin
+    try:
+        bin_dir = install_root / "bin"
+        bin_dir.mkdir(parents=True, exist_ok=True)
+        py = python_exe(venv)
+        cli_script = app_dir / "scripts" / "yaxshilink_cli.py"
+        if is_windows():
+            wrapper = bin_dir / "yaxshilink.cmd"
+            content = (
+                "@echo off\r\n"
+                f"\"{py}\" \"{cli_script}\" %*\r\n"
+            )
+            wrapper.write_text(content, encoding="utf-8")
+        else:
+            wrapper = bin_dir / "yaxshilink"
+            content = (
+                "#!/usr/bin/env bash\n"
+                f"PY=\"{py}\"\n"
+                f"CLI=\"{cli_script}\"\n"
+                "exec \"$PY\" \"$CLI\" \"$@\"\n"
+            )
+            wrapper.write_text(content, encoding="utf-8")
+            wrapper.chmod(0o755)
+        created.append(str(wrapper))
+
+        # Best-effort link into ~/.local/bin for convenience on Unix
+        if not is_windows():
+            local_bin = Path.home() / ".local" / "bin"
+            try:
+                local_bin.mkdir(parents=True, exist_ok=True)
+                target = local_bin / "yaxshilink"
+                if target.exists() or target.is_symlink():
+                    try:
+                        target.unlink()
+                    except Exception:
+                        pass
+                target.symlink_to(wrapper)
+                created.append(str(target))
+            except Exception:
+                # If symlink fails (e.g., FS limitations), just print a hint later
+                pass
+    except Exception as e:
+        print(f"[warn] Failed to install CLI shim: {e}")
+
     manifest = {
         "app_name": APP_NAME,
         "os": platform.system(),
@@ -293,6 +337,12 @@ def install(install_root: Path, reinstall_deps: bool = False):
     print("Next steps:")
     print("- If this is the first run, run initial setup once to store config and device ports:")
     print(f"  {python_exe(venv)} {app_dir / 'main.py'} --setup")
+    if not is_windows():
+        print("- Global CLI: try 'yaxshilink status' (ensure ~/.local/bin is on your PATH).")
+        print(f"  Or use wrapper: {install_root / 'bin' / 'yaxshilink'} <cmd>")
+    else:
+        print("- Global CLI on Windows: use the wrapper:")
+        print(f"  {install_root / 'bin' / 'yaxshilink.cmd'} <cmd>")
 
 
 def uninstall(install_root: Path):
