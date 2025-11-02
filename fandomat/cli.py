@@ -79,4 +79,9 @@ def parse_args(argv=None) -> argparse.Namespace:
         action="store_true",
         help="Force setup prompts even if config.json already exists",
     )
+    parser.add_argument(
+        "--device-setup-only",
+        action="store_true",
+        help="Prompt for device ports (and save) then exit without starting the runtime",
+    )
     return parser.parse_args(argv)

@@ -7,6 +7,7 @@ import subprocess
 import platform
 from pathlib import Path
 from datetime import datetime
+import hashlib
 
 APP_NAME = "yaxshilink"
 SERVICE_NAME = "yaxshilink-fandomat"
@@ -191,14 +192,26 @@ def create_venv(install_root: Path):
     return venv
 
 
-def pip_install(venv: Path, app_dir: Path):
+def _hash_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def pip_install(venv: Path, app_dir: Path, force: bool = False) -> bool:
     pip = python_exe(venv)
     req = app_dir / "requirements.txt"
     if not req.exists():
         # fallback to repo root requirements if not copied
         req = Path.cwd() / "requirements.txt"
-    run([str(pip), "-m", "pip", "install", "--upgrade", "pip", "wheel", "setuptools"])
+    # Upgrade pip tooling only when forced
+    if force:
+        run([str(pip), "-m", "pip", "install", "--upgrade", "pip", "wheel", "setuptools"])
+    # Install requirements; pip will skip already satisfied packages
     run([str(pip), "-m", "pip", "install", "-r", str(req)])
+    return True
 
 
 def copy_project(src_root: Path, install_root: Path):
@@ -209,12 +222,22 @@ def copy_project(src_root: Path, install_root: Path):
     return app_dst
 
 
-def install(install_root: Path):
+def install(install_root: Path, reinstall_deps: bool = False):
     src_root = Path.cwd()
     install_root.mkdir(parents=True, exist_ok=True)
+    # Load previous manifest if present for idempotency checks
+    prev_manifest = read_manifest(install_root)
     app_dir = copy_project(src_root, install_root)
     venv = create_venv(install_root)
-    pip_install(venv, app_dir)
+    # Decide whether to (re)install dependencies
+    req_file = app_dir / "requirements.txt"
+    req_hash = _hash_file(req_file) if req_file.exists() else None
+    need_deps = reinstall_deps or (not prev_manifest) or (prev_manifest.get("requirements_hash") != req_hash)
+    if need_deps:
+        print("[deps] Installing Python dependencies…")
+        pip_install(venv, app_dir, force=True)
+    else:
+        print("[deps] Requirements unchanged — skipping dependency install.")
 
     created = []
     service_ref = None
@@ -259,7 +282,8 @@ def install(install_root: Path):
         "service_ref": service_ref,
         "created": created,
         "timestamp": datetime.utcnow().isoformat() + "Z",
-        "version": 1
+        "requirements_hash": req_hash,
+        "version": 2
     }
     mpath = write_manifest(install_root, manifest)
 
@@ -299,6 +323,7 @@ def main():
     p_install = sub.add_parser("install", help="Install the app and register a per-user background service")
     p_install.add_argument("--dir", dest="install_dir", help="Install root directory (default: per-user)")
     p_install.add_argument("--auto-setup", action="store_true", help="Run initial interactive setup after install")
+    p_install.add_argument("--reinstall-deps", action="store_true", help="Force reinstall of Python dependencies even if unchanged")
 
     p_un = sub.add_parser("uninstall", help="Stop service and remove the installation")
     p_un.add_argument("--dir", dest="install_dir", help="Install root directory (default: per-user)")
@@ -308,12 +333,15 @@ def main():
     install_root = Path(args.install_dir) if args.install_dir else default_install_root()
 
     if args.cmd == "install":
-        install(install_root)
+        install(install_root, reinstall_deps=getattr(args, "reinstall_deps", False))
         if getattr(args, "auto_setup", False):
-            # Run interactive setup in foreground
+            # Run interactive setup in foreground in two steps that exit cleanly
             app_dir = Path(install_root) / "app"
             venv = Path(install_root) / ".venv"
-            run([str(python_exe(venv)), str(app_dir / "main.py"), "--setup"], check=False)
+            # 1) WS config only
+            run([str(python_exe(venv)), str(app_dir / "main.py"), "--configure-only"], check=False)
+            # 2) Device ports only (scanner + arduino), then exit
+            run([str(python_exe(venv)), str(app_dir / "main.py"), "--device-setup-only"], check=False)
     elif args.cmd == "uninstall":
         uninstall(install_root)
     else:

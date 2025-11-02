@@ -47,7 +47,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     arduino_port = args.arduino_port or cfg.get("ARDUINO_PORT")
 
     # If --setup is provided, force re-prompt for device ports
-    if args.setup or not scanner_port:
+    if args.setup or args.device_setup_only or not scanner_port:
         scanner_port = choose_port_interactive("Select SCANNER serial port:")
         if not scanner_port:
             log.error("No scanner port selected. Exiting.")
@@ -55,7 +55,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         # Persist chosen scanner port
         cfg = update_config({"SCANNER_PORT": scanner_port})
 
-    if args.setup or not arduino_port:
+    if args.setup or args.device_setup_only or not arduino_port:
         arduino_port = choose_port_interactive("Select ARDUINO serial port:")
         if not arduino_port:
             log.error("No arduino port selected. Exiting.")
@@ -78,6 +78,11 @@ def main(argv: Optional[list[str]] = None) -> int:
         to_save["BAUDRATE_ARDUINO"] = int(baud_arduino)
     if to_save:
         update_config(to_save)
+
+    # Device setup only: exit here without starting threads
+    if args.device_setup_only:
+        log.info("Device ports saved. Exiting as requested by --device-setup-only.")
+        return 0
 
     stop_event = threading.Event()
 
