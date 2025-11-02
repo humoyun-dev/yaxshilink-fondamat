@@ -1,10 +1,10 @@
 # YaxshiLink Fandomat — 24/7 Deployment
 
-This is the primary deployment guide. Translations:
+This is the primary deployment guide. Translations (full parity):
 
 - English index: `docs/DEPLOYMENT.en.md`
 - Русский: `docs/DEPLOYMENT.ru.md`
-- O‘zbek: `docs/DEPLOYMENT.uz.md`
+- O‘zbek: `docs/DEPLOYMENT.uz.full.md`
 
 ---
 

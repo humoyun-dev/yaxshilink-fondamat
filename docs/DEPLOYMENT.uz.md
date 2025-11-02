@@ -1,6 +1,6 @@
 # YaxshiLink Fandomat — 24/7 O‘rnatish (O‘zbek)
 
-Bu hujjat Fandomat dasturini o‘rnatish va 24/7 ishlatish bo‘yicha qo‘llanma. To‘liq inglizcha qo‘llanma `docs/DEPLOYMENT.md` faylida.
+Bu to‘liq qo‘llanma Fandomat runtaymini o‘rnatish va ekspluatatsiya qilish bo‘yicha. Ikki yo‘l mavjud: universal o‘rnatuvchi (tavsiya etiladi) yoki OS‑ga xos qo‘lda sozlash. Eng tez yo‘l — “Tez start”; ko‘proq boshqaruv uchun universal o‘rnatuvchi yoki qo‘lda o‘rnatishdan foydalaning.
 
 ---
 

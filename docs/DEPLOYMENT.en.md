@@ -45,20 +45,24 @@ Notes:
 - Default install directory:
   - macOS/Linux: ~/.yaxshilink
   - Windows: %LOCALAPPDATA%\yaxshilink
-- The installer registers a per‑user service:
+- The installer registers a per‑user service and performs a non‑blocking first‑time setup sequence to avoid hanging:
   - Linux: systemd user service
   - macOS: launchd LaunchAgent
   - Windows: Scheduled Task (at user logon)
-- First-time configuration: after install, run one-time setup to store credentials and device ports:
+- First-time configuration: after install, run the one-time setup to store credentials and device ports. The installer’s auto-setup runs two short commands that exit immediately to avoid starting the long‑running app:
 
 ```bash
-~/.yaxshilink/.venv/bin/python ~/.yaxshilink/app/main.py --setup   # macOS/Linux
+# 1) Save server credentials only (non-blocking)
+~/.yaxshilink/.venv/bin/python ~/.yaxshilink/app/main.py --configure-only   # macOS/Linux
+# 2) Choose and save device ports (non-blocking)
+~/.yaxshilink/.venv/bin/python ~/.yaxshilink/app/main.py --device-setup-only
 ```
 
 On Windows, replace the paths accordingly, e.g.:
 
 ```powershell
-& "$env:LOCALAPPDATA\yaxshilink\.venv\Scripts\python.exe" "$env:LOCALAPPDATA\yaxshilink\app\main.py" --setup
+& "$env:LOCALAPPDATA\yaxshilink\.venv\Scripts\python.exe" "$env:LOCALAPPDATA\yaxshilink\app\main.py" --configure-only
+& "$env:LOCALAPPDATA\yaxshilink\.venv\Scripts\python.exe" "$env:LOCALAPPDATA\yaxshilink\app\main.py" --device-setup-only
 ```
 
 Once the first setup is done, the background service will run without prompts.
@@ -84,10 +88,13 @@ python3 ./scripts/installer.py uninstall --dir /path/to/custom/location
 # Create venv and install deps
 ./scripts/setup_venv.sh
 
-# Enter initial settings (WS_URL, FANDOMAT_ID, DEVICE_TOKEN) and save
+# Enter initial settings (WS_URL, FANDOMAT_ID, DEVICE_TOKEN) and save (non‑blocking)
 ./.venv/bin/python ./main.py --configure-only
 
-# Choose and save device ports on first interactive run (or use --setup to force)
+# Choose and save device ports without starting the long‑running app (non‑blocking)
+./.venv/bin/python ./main.py --device-setup-only
+
+# Alternatively, do both in one interactive session (blocking run starts afterwards)
 ./.venv/bin/python ./main.py --setup
 ```
 
@@ -321,6 +328,7 @@ File: `config.json` (created in the working directory of the app; with the unive
 - `--no-config-prompt`: do not prompt for WS settings on startup
 - `--configure-only`: prompt for WS settings, save to config.json, exit
 - `--setup`: force interactive setup (WS + device ports), even if config exists
+- `--device-setup-only`: prompt only for device ports/baud, save, then exit (non‑blocking)
 
 ---
 

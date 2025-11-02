@@ -7,9 +7,9 @@ Cross‑platform device runtime for barcode scanner + Arduino, with WebSocket in
 
 ## Documentation languages
 
-- English: `docs/DEPLOYMENT.en.md` (full) (index + monitor)
-- Русский: `docs/DEPLOYMENT.ru.md`
-- O‘zbek: `docs/DEPLOYMENT.uz.md`
+- English: `docs/DEPLOYMENT.en.md` (full)
+- Русский: `docs/DEPLOYMENT.ru.md` (full)
+- O‘zbek: `docs/DEPLOYMENT.uz.full.md` (full)
 
 ## Key scripts
 

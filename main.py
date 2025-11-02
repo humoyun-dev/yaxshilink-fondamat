@@ -31,13 +31,21 @@ def main(argv: Optional[list[str]] = None) -> int:
     # Configuration handling:
     # - --configure-only: always prompt and exit
     # - Else: ensure config exists; prompt only if first run or --setup
+    # If running in non-interactive mode but config is missing, fail fast with guidance
+    existing_cfg = load_existing_config()
+    has_ws_cfg = bool(existing_cfg.get("WS_URL") and existing_cfg.get("FANDOMAT_ID") is not None and existing_cfg.get("DEVICE_TOKEN"))
+
     if args.configure_only:
         ensure_server_config_interactive()
         log.info("Configuration saved. Exiting as requested by --configure-only.")
         return 0
     else:
         # --setup forces prompt; otherwise only prompt on first run
-        ensure_server_config(setup=args.setup)
+        if args.no_config_prompt and not has_ws_cfg:
+            log.error("Missing WS configuration and --no-config-prompt was provided. Run once with --configure-only to save WS_URL, FANDOMAT_ID, and DEVICE_TOKEN.")
+            return 1
+        if not args.no_config_prompt:
+            ensure_server_config(setup=args.setup)
 
     # Load existing config to reuse saved device ports/baudrates
     cfg = load_existing_config()
