@@ -1,0 +1,20 @@
+[Unit]
+Description=YaxshiLink Fandomat Device Runtime
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/Users/mac/projects/yaxshilink
+ExecStart=/Users/mac/projects/yaxshilink/.venv/bin/python /Users/mac/projects/yaxshilink/main.py --no-config-prompt
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+
+# If you need specific environment variables, duplicate Environment= lines here
+# Environment=WS_URL=wss://api.yaxshi.link/ws/fandomats
+# Environment=FANDOMAT_ID=4
+# Environment=DEVICE_TOKEN=...
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>com.yaxshi.fandomat</string>
+
+    <key>ProgramArguments</key>
+    <array>
+      <string>/Users/mac/projects/yaxshilink/.venv/bin/python</string>
+      <string>/Users/mac/projects/yaxshilink/main.py</string>
+      <string>--no-config-prompt</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/mac/projects/yaxshilink</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/mac/projects/yaxshilink/logs/launchd.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/mac/projects/yaxshilink/logs/launchd.err.log</string>
+  </dict>
+</plist>
