@@ -221,6 +221,35 @@ To view logs, redirect output when running manually or use a logging solution (e
 ./.venv/bin/python ./main.py --list-ports
 ```
 
+### Global CLI (yaxshilink)
+
+The installer adds a per-user command to control the app from anywhere. Open a new terminal after install so PATH updates take effect.
+
+Common commands:
+
+```bash
+yaxshilink status        # Show service status
+yaxshilink start         # Start background service
+yaxshilink stop          # Stop background service
+yaxshilink restart       # Restart service
+
+yaxshilink monitor       # Open interactive monitor (points to installed app)
+
+yaxshilink setup         # One-time two-step setup (credentials + device ports)
+yaxshilink configure     # Only WS_URL / FANDOMAT_ID / DEVICE_TOKEN
+yaxshilink device-setup  # Only scanner/arduino ports
+
+yaxshilink uninstall     # Unregister service and remove installation
+yaxshilink where         # Print install folder (e.g., ~/.yaxshilink)
+```
+
+If your shell can’t find the command, ensure ~/.local/bin is on your PATH (Unix):
+
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
 ---
 
 ## OS‑specific notes and troubleshooting

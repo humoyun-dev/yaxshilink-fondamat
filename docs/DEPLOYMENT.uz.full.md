@@ -200,6 +200,35 @@ Qo‘lda ishga tushirganda loglarni ko‘rish uchun chiqishni faylga yo‘naltir
 ./.venv/bin/python ./main.py --list-ports
 ```
 
+### Global CLI (yaxshilink)
+
+O‘rnatuvchi istalgan joydan boshqarish uchun buyruq qo‘shadi. O‘rnatilgandan keyin yangi terminal oching (PATH yangilanishi uchun).
+
+Ko‘p ishlatiladigan buyruqlar:
+
+```bash
+yaxshilink status        # Servis holati
+yaxshilink start         # Servisni ishga tushirish
+yaxshilink stop          # Servisni to‘xtatish
+yaxshilink restart       # Servisni qayta ishga tushirish
+
+yaxshilink monitor       # Interaktiv monitorni ochish (o‘rnatilgan ilovaga yo‘naltirilgan)
+
+yaxshilink setup         # Bir martalik ikki bosqichli sozlash (credentials + qurilma portlari)
+yaxshilink configure     # Faqat WS_URL / FANDOMAT_ID / DEVICE_TOKEN
+yaxshilink device-setup  # Faqat skaner/Arduino portlari
+
+yaxshilink uninstall     # Servisni bekor qilish va o‘rnatishni o‘chirish
+yaxshilink where         # O‘rnatish yo‘li (masalan, ~/.yaxshilink)
+```
+
+Agar buyruq topilmasa, ~/.local/bin ni PATH ga qo‘shing (Unix):
+
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
 ---
 
 ## OS bo‘yicha eslatmalar va nosozliklarni tuzatish

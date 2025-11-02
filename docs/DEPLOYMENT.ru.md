@@ -255,6 +255,35 @@ schtasks /Query /TN YaxshiLinkFandomat
 ./.venv/bin/python ./main.py --list-ports
 ```
 
+### Глобальная CLI (yaxshilink)
+
+Установщик добавляет пользовательскую команду для управления сервисом из любой директории. Откройте новый терминал после установки, чтобы PATH обновился.
+
+Часто используемые команды:
+
+```bash
+yaxshilink status        # Статус сервиса
+yaxshilink start         # Запустить сервис
+yaxshilink stop          # Остановить сервис
+yaxshilink restart       # Перезапустить сервис
+
+yaxshilink monitor       # Открыть интерактивный монитор (указывает на установленное приложение)
+
+yaxshilink setup         # Разовая двухшаговая настройка (учётные данные + порты устройств)
+yaxshilink configure     # Только WS_URL / FANDOMAT_ID / DEVICE_TOKEN
+yaxshilink device-setup  # Только выбор портов сканера/Arduino
+
+yaxshilink uninstall     # Снять сервис и удалить установку
+yaxshilink where         # Путь установки (например, ~/.yaxshilink)
+```
+
+Если команда не находится, добавьте ~/.local/bin в PATH (Unix):
+
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
 ---
 
 ## Особенности ОС и устранение неполадок
