@@ -312,6 +312,37 @@ def install(install_root: Path, reinstall_deps: bool = False):
             except Exception:
                 # If symlink fails (e.g., FS limitations), just print a hint later
                 pass
+
+            # Ensure ~/.local/bin is on PATH by appending to common shell rc files if missing
+            try:
+                current_path = os.environ.get("PATH", "")
+                local_bin_str = str(local_bin)
+                if local_bin_str not in current_path.split(":" ):
+                    export_line = 'export PATH="$HOME/.local/bin:$PATH"\n'
+                    patched = False
+                    # Prefer updating an existing shell rc
+                    rc_candidates = [Path.home() / ".zshrc", Path.home() / ".bashrc", Path.home() / ".profile"]
+                    for rc in rc_candidates:
+                        try:
+                            if rc.exists():
+                                txt = rc.read_text(encoding="utf-8", errors="ignore")
+                                if "$HOME/.local/bin" not in txt and "~/.local/bin" not in txt:
+                                    with rc.open("a", encoding="utf-8") as f:
+                                        f.write("\n# Added by YaxshiLink installer to expose 'yaxshilink' CLI\n")
+                                        f.write(export_line)
+                                    patched = True
+                                    break
+                        except Exception:
+                            continue
+                    if not patched:
+                        # Create .profile if nothing else worked
+                        rc = Path.home() / ".profile"
+                        with rc.open("a", encoding="utf-8") as f:
+                            f.write("\n# Added by YaxshiLink installer to expose 'yaxshilink' CLI\n")
+                            f.write(export_line)
+                
+            except Exception:
+                pass
     except Exception as e:
         print(f"[warn] Failed to install CLI shim: {e}")
 
@@ -338,8 +369,9 @@ def install(install_root: Path, reinstall_deps: bool = False):
     print("- If this is the first run, run initial setup once to store config and device ports:")
     print(f"  {python_exe(venv)} {app_dir / 'main.py'} --setup")
     if not is_windows():
-        print("- Global CLI: try 'yaxshilink status' (ensure ~/.local/bin is on your PATH).")
-        print(f"  Or use wrapper: {install_root / 'bin' / 'yaxshilink'} <cmd>")
+        print("- Global CLI: try 'yaxshilink status'. If the shell cannot find it, reopen your terminal or run:")
+        print("    source ~/.zshrc  # or ~/.bashrc / ~/.profile depending on your shell")
+        print(f"  Direct wrapper: {install_root / 'bin' / 'yaxshilink'} <cmd>")
     else:
         print("- Global CLI on Windows: use the wrapper:")
         print(f"  {install_root / 'bin' / 'yaxshilink.cmd'} <cmd>")
