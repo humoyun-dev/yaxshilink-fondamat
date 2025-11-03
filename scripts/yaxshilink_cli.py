@@ -2,16 +2,21 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import os
 import platform
 import shutil
 import subprocess
 import sys
+import tempfile
+from datetime import datetime
 from pathlib import Path
 
 SERVICE_NAME = "yaxshilink-fandomat"
 LAUNCHD_LABEL = "com.yaxshi.fandomat"
 TASK_NAME = "YaxshiLinkFandomat"
+REPO_URL = "https://github.com/humoyun-dev/yaxshilink-fondamat.git"
 
 
 def is_linux() -> bool:
@@ -143,6 +148,100 @@ def cmd_device_setup(args) -> int:
     return run([str(py), str(main_py), "--device-setup-only"], check=False).returncode
 
 
+def _hash_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _read_manifest(root: Path) -> dict | None:
+    m = root / "install_manifest.json"
+    if not m.exists():
+        return None
+    try:
+        with m.open("r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def _write_manifest(root: Path, manifest: dict) -> None:
+    m = root / "install_manifest.json"
+    try:
+        with m.open("w", encoding="utf-8") as f:
+            json.dump(manifest, f, indent=2)
+    except Exception:
+        pass
+
+
+def cmd_update(args) -> int:
+    root = install_root()
+    dst_app = app_dir()
+    vpy = venv_python()
+
+    print("[update] Stopping service…")
+    try:
+        cmd_stop(args)
+    except Exception:
+        pass
+
+    with tempfile.TemporaryDirectory() as tmp:
+        clone_dir = Path(tmp) / "repo"
+        print(f"[update] Cloning repo {REPO_URL} → {clone_dir} …")
+        res = run(["git", "clone", "--depth", "1", REPO_URL, str(clone_dir)], check=False)
+        if res.returncode != 0 or not clone_dir.exists():
+            print("[update] ERROR: Failed to clone repository. Ensure 'git' is installed and the URL is reachable.")
+            return 2
+
+        # Compute requirements hash from new source
+        new_req = clone_dir / "requirements.txt"
+        new_req_hash = _hash_file(new_req) if new_req.exists() else None
+
+        # Replace app directory
+        print(f"[update] Replacing installed app at {dst_app} …")
+        try:
+            if dst_app.exists():
+                shutil.rmtree(dst_app, ignore_errors=True)
+            ignore = shutil.ignore_patterns(".git", ".gitignore", ".venv", "__pycache__", ".DS_Store", "logs")
+            shutil.copytree(clone_dir, dst_app, ignore=ignore)
+        except Exception as e:
+            print(f"[update] ERROR: Failed to copy files: {e}")
+            return 3
+
+    # Install dependencies if changed
+    try:
+        manifest = _read_manifest(root) or {}
+        old_hash = manifest.get("requirements_hash")
+        if new_req_hash and new_req_hash != old_hash:
+            print("[update] Dependencies changed — installing requirements…")
+            run([str(vpy), "-m", "pip", "install", "-r", str(dst_app / "requirements.txt")], check=False)
+            manifest["requirements_hash"] = new_req_hash
+        else:
+            print("[update] Requirements unchanged — skipping dependency install.")
+        # Update manifest metadata
+        manifest["timestamp"] = datetime.utcnow().isoformat() + "Z"
+        manifest.setdefault("app_name", "yaxshilink")
+        manifest.setdefault("os", platform.system())
+        manifest.setdefault("install_root", str(root))
+        manifest.setdefault("app_dir", str(dst_app))
+        manifest.setdefault("venv", str(root / ".venv"))
+        manifest.setdefault("python", str(vpy))
+        _write_manifest(root, manifest)
+    except Exception as e:
+        print(f"[update] WARN: Could not update manifest or install deps cleanly: {e}")
+
+    print("[update] Restarting service…")
+    try:
+        cmd_restart(args)
+    except Exception:
+        # try start as fallback
+        cmd_start(args)
+    print("[update] Done.")
+    return 0
+
+
 def _remove_install_root(root: Path):
     try:
         shutil.rmtree(root, ignore_errors=True)
@@ -197,6 +296,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("setup", help="Run initial two-step setup (credentials + device ports)").set_defaults(func=cmd_setup)
     sub.add_parser("configure", help="Configure WS_URL/FANDOMAT_ID/DEVICE_TOKEN only").set_defaults(func=cmd_configure)
     sub.add_parser("device-setup", help="Choose and save device ports only").set_defaults(func=cmd_device_setup)
+    sub.add_parser("update", help="Update app from GitHub and restart service").set_defaults(func=cmd_update)
     sub.add_parser("uninstall", help="Unregister service and remove installation").set_defaults(func=cmd_uninstall)
     sub.add_parser("where", help="Print install root path").set_defaults(func=cmd_where)
     return p

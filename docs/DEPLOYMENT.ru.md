@@ -266,6 +266,7 @@ yaxshilink status        # Статус сервиса
 yaxshilink start         # Запустить сервис
 yaxshilink stop          # Остановить сервис
 yaxshilink restart       # Перезапустить сервис
+yaxshilink update        # Скачать обновления с GitHub и перезапустить
 
 yaxshilink monitor       # Открыть интерактивный монитор (указывает на установленное приложение)
 

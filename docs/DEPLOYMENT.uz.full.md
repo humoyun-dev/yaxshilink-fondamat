@@ -211,6 +211,7 @@ yaxshilink status        # Servis holati
 yaxshilink start         # Servisni ishga tushirish
 yaxshilink stop          # Servisni to‘xtatish
 yaxshilink restart       # Servisni qayta ishga tushirish
+yaxshilink update        # GitHub’dan yangilash va servisni qayta ishga tushirish
 
 yaxshilink monitor       # Interaktiv monitorni ochish (o‘rnatilgan ilovaga yo‘naltirilgan)
 

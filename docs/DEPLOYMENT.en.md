@@ -232,6 +232,7 @@ yaxshilink status        # Show service status
 yaxshilink start         # Start background service
 yaxshilink stop          # Stop background service
 yaxshilink restart       # Restart service
+yaxshilink update        # Pull latest from GitHub and restart
 
 yaxshilink monitor       # Open interactive monitor (points to installed app)
 
